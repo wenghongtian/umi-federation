@@ -1,0 +1,101 @@
+diff --git a/dist/build.js b/dist/build.js
+index c6103ed08b96b90da41ed59064fb970e823fb942..489b3bec6f9909eb87276879614c414764e770cf 100644
+--- a/dist/build.js
++++ b/dist/build.js
+@@ -75,7 +75,8 @@ async function build(opts) {
+     if (opts.clean) {
+       import_utils.rimraf.sync(webpackConfig.output.path);
+     }
+-    const compiler = (0, import_webpack.default)(webpackConfig);
++    const webpackCompiler = opts.config.webpack || import_webpack.default;
++    const compiler = webpackCompiler(webpackConfig);
+     let closeWatching;
+     const handler = async (err, stats) => {
+       var _a;
+diff --git a/dist/cli.js b/dist/cli.js
+index 6cf8ebd1101774de3ec1391b19312fdc9e79f909..554867dffd26c1a15575ec82e8dc76ad3d294dfe 100644
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -45,7 +45,7 @@ import_utils.register.register({
+ });
+ import_utils.register.clearFiles();
+ if ((0, import_fs.existsSync)(configFile)) {
+-  require("./requireHook");
++  // require("./requireHook");
+   config = require(configFile).default;
+ }
+ Object.assign(config, args);
+diff --git a/dist/config/config.js b/dist/config/config.js
+index dc77f396d4cd104c887a5e55ab36f1c7ba003f0e..e52143b00e49752094db0b88276309a6bd2d7772 100644
+--- a/dist/config/config.js
++++ b/dist/config/config.js
+@@ -145,7 +145,7 @@ async function getConfig(opts) {
+   }
+   await (0, import_manifestPlugin.addManifestPlugin)(applyOpts);
+   if (isDev && opts.hmr) {
+-    config.plugin("hmr").use(import_webpack.default.HotModuleReplacementPlugin);
++    config.plugin("hmr").use((opts.userConfig.webpack || import_webpack.default).HotModuleReplacementPlugin);
+   }
+   await (0, import_ssrPlugin.default)(applyOpts);
+   await (0, import_compressPlugin.addCompressPlugin)(applyOpts);
+diff --git a/dist/dev.js b/dist/dev.js
+index 6c0f215ad5bf75c05157f4fb59ad405b80f19cd6..c66cf24823760dba157e9371b7dc6a8c0d1f1972 100644
+--- a/dist/dev.js
++++ b/dist/dev.js
+@@ -75,7 +75,7 @@ async function dev(opts) {
+     afterMiddlewares: [...opts.afterMiddlewares || []],
+     onDevCompileDone: opts.onDevCompileDone,
+     onProgress: opts.onProgress,
+-    onBeforeMiddleware: opts.onBeforeMiddleware
++    onBeforeMiddleware: opts.onBeforeMiddleware,
+   });
+ }
+ async function setup(opts) {
+@@ -91,7 +91,7 @@ async function setup(opts) {
+       strategy: opts.mfsuStrategy,
+       include: opts.mfsuInclude || [],
+       srcCodeCache: opts.srcCodeCache,
+-      implementor: import_webpack.default,
++      implementor: opts.config.webpack || import_webpack.default,
+       buildDepWithESBuild: (_a = opts.config.mfsu) == null ? void 0 : _a.esbuild,
+       depBuildConfig: {
+         extraPostCSSPlugins: ((_b = opts.config) == null ? void 0 : _b.extraPostCSSPlugins) || []
+diff --git a/dist/index.js b/dist/index.js
+index b92ace57cb88e12198eb17af7ea8a769860cfa7a..90d21003d4c564d94055f69464753435aa586e48 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -16,7 +16,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
+ // src/index.ts
+ var src_exports = {};
+ module.exports = __toCommonJS(src_exports);
+-var import_requireHook = require("./requireHook");
++// var import_requireHook = require("./requireHook");
+ __reExport(src_exports, require("./build"), module.exports);
+ __reExport(src_exports, require("./config/config"), module.exports);
+ __reExport(src_exports, require("./dev"), module.exports);
+diff --git a/dist/server/server.js b/dist/server/server.js
+index 34361be570cf974e83fa5e0474ae7cc1192ecb33..2dab2c129413596028e3ad83ca51d2c1196ec5e3 100644
+--- a/dist/server/server.js
++++ b/dist/server/server.js
+@@ -86,7 +86,7 @@ async function createServer(opts) {
+       };
+       progresses.push(progress);
+       config.plugins.push(
+-        new import_webpack.default.ProgressPlugin((percent, msg, ...details) => {
++        new (opts.userConfig.webpack || import_webpack.default).ProgressPlugin((percent, msg, ...details) => {
+           progress.percent = percent;
+           progress.status = msg;
+           progress.details = details;
+@@ -95,8 +95,10 @@ async function createServer(opts) {
+       );
+     });
+   }
+-  const compiler = (0, import_webpack.default)(configs);
+-  const webpackDevMiddleware = require("@umijs/bundler-webpack/compiled/webpack-dev-middleware");
++  const webpackCompiler = opts.userConfig.webpack || import_webpack.default;
++  const compiler = webpackCompiler(configs);
++  // const webpackDevMiddleware = require("@umijs/bundler-webpack/compiled/webpack-dev-middleware");
++  const webpackDevMiddleware = require('webpack-dev-middleware');
+   const compilerMiddleware = webpackDevMiddleware(compiler, {
+     publicPath: userConfig.publicPath || "/",
+     writeToDisk: userConfig.writeToDisk,

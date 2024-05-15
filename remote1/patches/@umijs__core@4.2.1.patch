@@ -1,0 +1,12 @@
+diff --git a/dist/config/config.js b/dist/config/config.js
+index 9ea9526ff160d22a27aa45a1ad8800856072b0e5..cb7d4f0a279452585bfeee066df52b74d4906c92 100644
+--- a/dist/config/config.js
++++ b/dist/config/config.js
+@@ -179,6 +179,7 @@ var Config = class {
+   static validateConfig(opts) {
+     const errors = /* @__PURE__ */ new Map();
+     const configKeys = new Set(Object.keys(opts.config));
++    configKeys.delete('webpack');
+     for (const key of Object.keys(opts.schemas)) {
+       configKeys.delete(key);
+       if (!opts.config[key])
